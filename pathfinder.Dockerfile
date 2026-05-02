@@ -1,20 +1,21 @@
-FROM php:7.4-fpm-alpine AS build
+FROM php:8.4-fpm-alpine AS build
 
 RUN apk add --no-cache libpng-dev git ${PHPIZE_DEPS} \
     && docker-php-ext-install gd pdo_mysql \
-    && pecl install redis-5.3.7 \
+    && pecl install redis \
     && docker-php-ext-enable redis
 
 COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
 
 COPY pathfinder /app
 WORKDIR /app
-RUN composer install --no-dev --optimize-autoloader
+
+RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs
 
 COPY patches/apply.php /patches/apply.php
 RUN php /patches/apply.php
 
-FROM php:7.4-fpm-alpine
+FROM php:8.4-fpm-alpine
 
 RUN apk add --no-cache \
         nginx \
@@ -31,7 +32,7 @@ RUN apk add --no-cache \
 
 RUN apk add --no-cache --virtual .build-deps libpng-dev ${PHPIZE_DEPS} \
     && docker-php-ext-install gd pdo_mysql \
-    && pecl install redis-5.3.7 \
+    && pecl install redis \
     && docker-php-ext-enable redis \
     && apk del .build-deps
 
