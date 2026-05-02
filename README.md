@@ -1,12 +1,10 @@
 # Pathfinder Containers
 
-[![Docker Image Master Branch](https://github.com/goryn-clade/pathfinder-containers/actions/workflows/docker-image.yml/badge.svg?branch=master)](https://github.com/goryn-clade/pathfinder-containers/actions/workflows/docker-image.yml)
+A fork of [goryn-clade/pathfinder-containers](https://github.com/goryn-clade/pathfinder-containers), which itself is based on Goryn Clade's [Pathfinder](https://github.com/goryn-clade/pathfinder/) fork of the EVE Online wormhole mapping tool by [exodus4d](https://github.com/exodus4d/pathfinder).
 
-
-A fork of techfreak's [Pathfinder-container](https://gitlab.com/techfreak/pathfinder-container/) docker-compose solution for Pathfinder that is designed to work with Goryn Clade's [Pathfinder](https://github.com/goryn-clade/pathfinder/) fork, using [Traefik](https://traefik.io/) as a reverse proxy to expose the docker container.
+This fork runs on **PHP 8.4**, removes the Traefik dependency (direct port binding), and adds individual character map access.
 
 1. [Installation](#installation)
-1. [Using Traefik](#using-traefik)
 1. [Development](#development)
 
 ## Installation
@@ -14,7 +12,7 @@ A fork of techfreak's [Pathfinder-container](https://gitlab.com/techfreak/pathfi
 **Prerequisites**:
 * [docker](https://docs.docker.com/)
 
-> **Note**: The Docker-compose file uses Compose v3.8, so requires Docker Engine 19.03.0+
+> **Note**: Requires Docker Engine 23.0+ with Compose V2.
 
 </br>
 
@@ -41,7 +39,7 @@ A fork of techfreak's [Pathfinder-container](https://gitlab.com/techfreak/pathfi
   
 1. **Clone the repo**
     ```shell
-    git clone --recurse-submodules  https://github.com/goryn-clade/pathfinder-containers.git
+    git clone --recurse-submodules https://github.com/XorOwl/pathfinder-containers.git
     ```
 
 1. **Create a *.env* file (copy .env.example) and make sure every config option has an entry.**
@@ -92,7 +90,7 @@ A fork of techfreak's [Pathfinder-container](https://gitlab.com/techfreak/pathfi
     
 1. **Build & Run it**
     ```shell
-    docker network create web && docker compose up -d
+    docker compose up -d --build
     ```
 
 1. **Open the http://< your-domain >/setup page.**
@@ -105,24 +103,12 @@ A fork of techfreak's [Pathfinder-container](https://gitlab.com/techfreak/pathfi
     ```shell
     docker compose exec pfdb /bin/sh -c "unzip -p eve_universe.sql.zip | mysql -u root -p\$MYSQL_ROOT_PASSWORD eve_universe";
 
-1. **When everything works, configure Traefik correctly for production**
-    * Remove the staging CA server line  from `docker-compose.yml`from the `command` block of the traefik service definition. 
-    * Delete the `./letsencrypt/acme.json` configuration file so Let's Encrypt will get a new certificate.</br></br>
-    * If you are not the root user on your host you may need to edit file permissions. Docker-engine creates the `letsencrypt` director as root user, which means that you would need to prefix `sudo` on any future docker commands (`sudo docker compose up` etc). To avoid doing this you can take ownership of the letsencrypt directory by running `sudo chown -R $USER ./letsencrypt`.
+1. **When everything works**
+    * Point your reverse proxy (nginx, Caddy, etc.) at port 80 of the host.
+    * SSL termination is handled externally — this stack binds HTTP on port 80 directly.
 
 
 > Hint: If you need to make changes, perform your edits first, then do `docker compose down` to bring down the project, and then `docker compose up --build -d` to rebuild the containers and run them again.
-
-</br>
-
----
-</br>
-
-### Using Traefik
-
-To keep things simple, the structure of this project assumes that you will use Traefik to provide access to your Pathfinder docker container and nothing else. As such, Traefik containers start and stop with the Pathfinder containers. 
-
-If you want to run other services in docker on the same host that also need to be exposed to the web, you should strongly consider splitting Traefik into a separate project with its own docker-compose file. This will allow you to take pathfinder project offline for maintenance without affecting other containers that rely on Traefik.
 
 </br>
 
@@ -152,15 +138,10 @@ It's best to create a new SSO application for development work, so that you can 
 </br>
 
 ## Acknowledgments
-*  [exodus4d](https://github.com/exodus4d/) for pathfinder
+* [exodus4d](https://github.com/exodus4d/) for Pathfinder
+* [goryn-clade](https://github.com/goryn-clade/pathfinder-containers) for the upstream containers fork this is based on
 * [techfreak](https://gitlab.com/techfreak/pathfinder-container) for the original Pathfinder-container project
-* [johnschultz](https://gitlab.com/johnschultz/pathfinder-container/) for improvements to the traefik config
 * [tyrheimdaleve](https://github.com/TyrHeimdalEVE/pathfinder_esi) for maintaining the pathfinder_esi dependency
-
-## Authors
-* techfreak
-* johnschultz
-* samoneilll
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
